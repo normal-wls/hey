@@ -19,15 +19,17 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"github.com/rakyll/hey/request"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
 	"os"
+	"regexp"
 	"sync"
 	"time"
+
+	"github.com/rakyll/hey/request"
 
 	"golang.org/x/net/http2"
 )
@@ -204,7 +206,7 @@ func (b *Work) makeRequest(c *http.Client, preHooks ...func(r *http.Request)) {
 	}
 }
 
-func (b *Work) runWorker(client *http.Client, n int) {
+func (b *Work) runWorker(client *http.Client, n int, offset int) {
 	var throttle <-chan time.Time
 	if b.QPS > 0 {
 		throttle = time.Tick(time.Duration(1e6/(b.QPS)) * time.Microsecond)
@@ -227,7 +229,13 @@ func (b *Work) runWorker(client *http.Client, n int) {
 				<-throttle
 			}
 			b.makeRequest(client, func(r *http.Request) {
-				s.Shuffle(r)
+				re := regexp.MustCompile(`{{\d+:}}`)
+				match := re.FindString(r.URL.Path)
+				if match != "" {
+					s.Shuffle(r, i*b.C+offset)
+				} else {
+					s.Shuffle(r)
+				}
 				fmt.Println(r.URL)
 			})
 		}
@@ -257,10 +265,10 @@ func (b *Work) runWorkers() {
 
 	// Ignore the case where b.N % b.C != 0.
 	for i := 0; i < b.C; i++ {
-		go func() {
-			b.runWorker(client, b.N/b.C)
+		go func(i int) {
+			b.runWorker(client, b.N/b.C, i)
 			wg.Done()
-		}()
+		}(i)
 	}
 	wg.Wait()
 }

@@ -64,3 +64,37 @@ Options:
 ```
 
 Previously known as [github.com/rakyll/boom](https://github.com/rakyll/boom).
+
+# Note
+The feature of this version is supporting the dynamic url with increasing number.
+
+For example, after download the execution file `ihey` in the Releases, the command is:
+``` shell
+ihey -n 100 -c 10 http://some_api/{{20:}} # the beginning number is between {{ and : }}
+```
+if you use the source code and run `go build`, you should still use `hey` command instead of `ihey`.
+
+The example above will call the api with 10 group, each group has 10 requests, and the url will be:
+```
+# group 1
+http://some_api/20
+http://some_api/21
+http://some_api/22
+...
+
+# group 2
+http://some_api/30
+http://some_api/31
+http://some_api/32
+...
+
+...
+
+# group 10
+http://some_api/110
+http://some_api/111
+http://some_api/112
+...
+```
+
+The code of this version is modified based on the master branch of the fork repo [https://github.com/preslavrachev/hey](https://github.com/preslavrachev/hey).

@@ -12,14 +12,14 @@ func (t *testGenerator) Generate(limit int) string {
 }
 
 func Test_newShuffler(t *testing.T) {
-	r, _ := http.NewRequest("GET", "https://test.com/{{some_regex_pattern_here}}", nil)
+	r, _ := http.NewRequest("GET", "https://test.com/{{1001:}}/abc", nil)
 	s := newShuffler(r, func(match string) generator {
 		return &testGenerator{}
 	})
 
-	s.Shuffle(r)
+	s.Shuffle(r, 10)
 
-	expectedURL := "https://test.com/1234"
+	expectedURL := "https://test.com/1011/abc"
 	if r.URL.String() != expectedURL {
 		t.Errorf("Generated request URL does not match: %s, expected: %s", r.URL, expectedURL)
 	}
